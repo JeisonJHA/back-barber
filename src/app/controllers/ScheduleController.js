@@ -1,11 +1,11 @@
 import { parseISO, startOfDay, endOfDay } from 'date-fns';
 
-import { Op } from 'sequelize/types';
+import { Op } from 'sequelize';
 import Appointment from '../models/Appointment';
 import User from '../models/User';
 
 class ScheduleController {
-  async store(req, res) {
+  async index(req, res) {
     const checkUserProvider = User.findOne({
       where: {
         provider_id: req.userId,
