@@ -19,16 +19,20 @@ routes.post('/users', UserController.store);
 routes.post('/session', SessionController.store);
 
 routes.use(auth);
+
 routes.put('/users', UserController.update);
+
 routes.get('/providers', ProviderController.index);
 
 routes.get('/apointments', AppointmentController.index);
 routes.post('/apointments', AppointmentController.store);
+routes.delete('/apointments/:id', AppointmentController.delete);
 
 routes.get('/schedules', ScheduleController.index);
-routes.put('/files', upload.single('file'), FileController.update);
 
 routes.get('/notifications', NotifcationController.index);
 routes.put('/notifications/:id', NotifcationController.update);
+
+routes.put('/files', upload.single('file'), FileController.update);
 
 export default routes;
