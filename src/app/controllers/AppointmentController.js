@@ -101,6 +101,11 @@ class AppointmentController {
           as: 'provider',
           attributes: ['name', 'email'],
         },
+        {
+          model: User,
+          as: 'user',
+          attributes: ['name'],
+        },
       ],
     });
     if (appointment.user_id !== req.userId) {
@@ -112,7 +117,7 @@ class AppointmentController {
     const dateWithSub = subHours(appointment.date, 2);
     if (isBefore(dateWithSub, new Date())) {
       return res.status(401).json({
-        error: 'You can onlu cancel appointment 2 hours in advance.',
+        error: 'You can only cancel appointment 2 hours in advance.',
       });
     }
 
@@ -123,7 +128,14 @@ class AppointmentController {
     await Mail.sendMail({
       to: `${appointment.provider.name} <${appointment.provider.email}>`,
       subject: 'Agendamento cancelado',
-      text: 'Você tem um cancelamento',
+      template: 'cancellation',
+      context: {
+        provider: appointment.provider.name,
+        user: appointment.user.name,
+        date: format(appointment.date, "dd 'de' MMMM', às' H:mm'h'", {
+          locale: ptBR,
+        }),
+      },
     });
     return res.json(appointment);
   }
