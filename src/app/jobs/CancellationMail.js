@@ -1,5 +1,5 @@
 import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/esm/locale';
+import { ptBR } from 'date-fns/locale';
 import Mail from '../../lib/Mail';
 
 class CancellationMail {
