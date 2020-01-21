@@ -28,13 +28,13 @@ class ScheduleController {
           [Op.between]: [startOfDay(parsedDate), endOfDay(parsedDate)],
         },
       },
-      include:[
+      include: [
         {
           model: User,
           as: 'user',
-          attributes:['name']
-        }
-      ]
+          attributes: ['name'],
+        },
+      ],
       order: ['date'],
     });
 
