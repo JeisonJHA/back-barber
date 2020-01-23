@@ -10,6 +10,7 @@ import {
 import { Op } from 'sequelize';
 
 import Appointment from '../models/Appointment';
+import Available from '../schema/Available';
 
 class AvailableController {
   async index(req, res) {
@@ -18,45 +19,64 @@ class AvailableController {
       return res.status(400).json({ error: 'Invalid date' });
     }
 
-    const searcDate = Number(date);
+    const searchDate = Number(date);
+    const provider_id = req.params.providerId;
     const appointments = await Appointment.findAll({
       where: {
-        provider_id: req.params.providerId,
+        provider_id,
         canceled_at: null,
         date: {
-          [Op.between]: [startOfDay(searcDate), endOfDay(searcDate)],
+          [Op.between]: [startOfDay(searchDate), endOfDay(searchDate)],
         },
       },
     });
 
-    const schedule = [
-      '08:00',
-      '09:00',
-      '10:00',
-      '11:00',
-      '12:00',
-      '13:00',
-      '14:00',
-      '15:00',
-      '16:00',
-      '17:00',
-      '18:00',
-    ];
+    const availableSchedule = await Available.findOne({ user: provider_id });
+    const available = availableSchedule.schedule.map(
+      ({ hour: time, available: blocked }) => {
+        const [hour, min] = time.split(':');
+        const value = setSeconds(
+          setMinutes(setHours(searchDate, hour), min),
+          0
+        );
 
-    const available = schedule.map(time => {
-      const [hour, min] = time.split(':');
-      const value = setSeconds(setMinutes(setHours(searcDate, hour), min), 0);
-
-      return {
-        time,
-        value: format(value, "yyyy-MM-dd'T'HH:mm:ssxxx"),
-        available:
-          isAfter(value, new Date()) &&
-          !appointments.fin(a => format(a.date, 'HH:mm') === time),
-      };
-    });
+        return {
+          time,
+          value: format(value, "yyyy-MM-dd'T'HH:mm:ssxxx"),
+          blocked: !blocked,
+          available:
+            isAfter(value, new Date()) &&
+            !appointments.find(a => format(a.date, 'HH:mm') === time),
+        };
+      }
+    );
 
     return res.json(available);
+  }
+
+  async store(req, res) {
+    await Available.create({
+      schedule: req.body.schedule,
+      user: req.body.provider_id,
+    });
+    return res.send();
+  }
+
+  async update(req, res) {
+    const { index } = req.params;
+    const { provider_id, available } = req.body;
+    const userSchedule = await Available.findOne({ user: provider_id });
+    userSchedule.schedule[index].available = available;
+    await userSchedule.update(
+      // eslint-disable-next-line no-underscore-dangle
+      { _id: userSchedule._id },
+      {
+        set: {
+          schedule: userSchedule.schedule,
+        },
+      }
+    );
+    return res.send();
   }
 }
 
