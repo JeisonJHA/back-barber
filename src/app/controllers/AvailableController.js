@@ -32,8 +32,11 @@ class AvailableController {
     });
 
     const availableSchedule = await Available.findOne({ user: provider_id });
+    if (!availableSchedule) {
+      return res.json([]);
+    }
     const available = availableSchedule.schedule.map(
-      ({ hour: time, available: blocked }) => {
+      ({ _id: id, hour: time, available: blocked }) => {
         const [hour, min] = time.split(':');
         const value = setSeconds(
           setMinutes(setHours(searchDate, hour), min),
@@ -41,6 +44,7 @@ class AvailableController {
         );
 
         return {
+          id,
           time,
           value: format(value, "yyyy-MM-dd'T'HH:mm:ssxxx"),
           blocked: !blocked,
@@ -63,17 +67,12 @@ class AvailableController {
   }
 
   async update(req, res) {
-    const { index } = req.params;
+    const { id } = req.params;
     const { provider_id, available } = req.body;
-    const userSchedule = await Available.findOne({ user: provider_id });
-    userSchedule.schedule[index].available = available;
-    await userSchedule.update(
-      // eslint-disable-next-line no-underscore-dangle
-      { _id: userSchedule._id },
+    await Available.updateOne(
+      { user: provider_id, 'schedule._id': id },
       {
-        set: {
-          schedule: userSchedule.schedule,
-        },
+        $set: { 'schedule.$.available': available },
       }
     );
     return res.send();

@@ -1,6 +1,8 @@
 import * as Yup from 'yup';
 import User from '../models/User';
 import File from '../models/File';
+import Available from '../schema/Available';
+import scheduleDefault from './utils/scheduleDefault';
 
 class UserController {
   async store(req, res) {
@@ -24,6 +26,10 @@ class UserController {
       return res.status(400).json({ error: 'User already exists·' });
     }
     const { id, name, email, provider } = await User.create(req.body);
+    await Available.create({
+      schedule: scheduleDefault,
+      user: id,
+    });
     return res.json({ id, name, email, provider });
   }
 
